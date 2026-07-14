@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#10635B" />
+<title>Padel Strength · 12-Week Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --court: #10635B;
+    --court-mid: #17877B;
+    --line: #F4F8F6;
+    --bg: #E9EFEC;
+    --card: #FFFFFF;
+    --ink: #0E211E;
+    --ink-soft: #5C716D;
+    --ball: #D2ED2A;
+    --ball-deep: #A9C40E;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    padding: 20px 16px 60px;
+    max-width: 640px;
+    margin-inline: auto;
+  }
+
+  .board {
+    background: var(--court);
+    border-radius: var(--radius);
+    padding: 22px 20px 20px;
+    color: var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+  .board::after {
+    content: "";
+    position: absolute;
+    left: 20px; right: 20px; bottom: 54px;
+    height: 2px;
+    background: rgba(244,248,246,0.18);
+  }
+  .eyebrow {
+    font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    font-size: 13px; color: var(--ball); margin: 0 0 4px; font-weight: 600;
+  }
+  .board h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: 30px; line-height: 1.02;
+    margin: 0 0 16px; text-transform: uppercase; letter-spacing: 0.01em;
+  }
+  .score-row { display: flex; align-items: flex-end; gap: 26px; position: relative; z-index: 1; }
+  .stat .num { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 46px; line-height: 0.85; }
+  .stat .num .of { color: var(--ball); }
+  .stat .lbl { font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: 0.12em; font-size: 12px; color: rgba(244,248,246,0.72); margin-top: 6px; }
+  .track { margin-top: 18px; height: 8px; border-radius: 99px; background: rgba(244,248,246,0.16); overflow: hidden; }
+  .track > span { display: block; height: 100%; width: 0%; background: var(--ball); border-radius: 99px; transition: width .45s cubic-bezier(.2,.7,.3,1); }
+
+  /* ---------- Tabs ---------- */
+  .tabs { display: flex; gap: 6px; margin-top: 16px; background: #dde6e2; padding: 5px; border-radius: 12px; }
+  .tab {
+    flex: 1; border: none; background: transparent; cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em; font-size: 15px;
+    color: var(--ink-soft); padding: 10px 8px; border-radius: 9px;
+    transition: background .2s, color .2s; -webkit-tap-highlight-color: transparent;
+  }
+  .tab.active { background: var(--court); color: var(--ball); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .legend {
+    background: var(--card); border-radius: var(--radius);
+    padding: 14px 16px; margin-top: 16px;
+    font-size: 13.5px; line-height: 1.5; color: var(--ink-soft);
+    border: 1px solid #dfe7e3;
+  }
+  .legend b { color: var(--ink); }
+
+  .weeks { margin-top: 14px; display: flex; flex-direction: column; gap: 12px; }
+  .week { background: var(--card); border-radius: var(--radius); border: 1px solid #dfe7e3; padding: 14px 16px 16px; transition: border-color .2s, box-shadow .2s; }
+  .week.done { border-color: var(--ball-deep); box-shadow: 0 0 0 2px rgba(210,237,42,0.35); }
+  .week-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .week-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-size: 19px; display: flex; align-items: baseline; gap: 8px; }
+  .flag { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; padding: 3px 8px; border-radius: 99px; background: var(--court); color: var(--ball); white-space: nowrap; }
+  .flag.goal { background: var(--ball); color: var(--court); }
+  .tick { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; color: var(--ink-soft); letter-spacing: 0.08em; }
+  .tick.full { color: var(--ball-deep); font-weight: 700; }
+
+  .sessions { display: flex; gap: 8px; }
+  .pill { flex: 1; border: 1.5px solid #d3ddd8; background: #f6f9f7; border-radius: 10px; padding: 11px 6px 10px; cursor: pointer; text-align: center; transition: transform .12s, background .2s, border-color .2s, color .2s; -webkit-tap-highlight-color: transparent; user-select: none; }
+  .pill:hover { border-color: var(--court-mid); }
+  .pill:active { transform: scale(0.96); }
+  .pill .day { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .pill .focus { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .pill .mark { font-size: 15px; margin-top: 5px; height: 16px; color: transparent; }
+  .pill.on { background: var(--ball); border-color: var(--ball-deep); color: var(--court); }
+  .pill.on .focus { color: #4a5a12; }
+  .pill.on .mark { color: var(--court); }
+
+  .note { margin-top: 11px; width: 100%; border: 1px solid #dfe7e3; border-radius: 9px; padding: 8px 10px; font-family: 'Inter', sans-serif; font-size: 13px; color: var(--ink); resize: vertical; min-height: 34px; background: #fbfdfc; }
+  .note::placeholder { color: #a6b3ae; }
+  .note:focus { outline: 2px solid var(--court-mid); outline-offset: 1px; }
+
+  /* ---------- Plan panel ---------- */
+  .plan-intro { background: var(--card); border: 1px solid #dfe7e3; border-radius: var(--radius); padding: 14px 16px; margin-top: 16px; font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); }
+  .plan-intro b { color: var(--ink); }
+  .day-block { margin-top: 18px; }
+  .day-heading { display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px; }
+  .day-heading .dnum { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 22px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--court); }
+  .day-heading .dfocus { font-size: 13px; color: var(--ink-soft); font-weight: 500; }
+  .ex-card { background: var(--card); border: 1px solid #dfe7e3; border-radius: 12px; padding: 12px 14px; margin-bottom: 9px; }
+  .ex-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .ex-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 17px; letter-spacing: 0.02em; text-transform: uppercase; }
+  .badge { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 0.04em; color: var(--court); background: #e6f2ef; padding: 3px 9px; border-radius: 99px; white-space: nowrap; }
+  .ladder { margin-top: 6px; font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
+  .ladder .start { color: var(--ink); font-weight: 600; }
+  .ladder .arrow { color: var(--ball-deep); font-weight: 700; padding: 0 3px; }
+
+  .footer { margin-top: 22px; text-align: center; }
+  .reset { background: none; border: 1px solid #cdd8d3; color: var(--ink-soft); font-family: 'Inter', sans-serif; font-size: 12.5px; padding: 8px 16px; border-radius: 99px; cursor: pointer; }
+  .reset:hover { border-color: var(--court-mid); color: var(--court); }
+  .save-note { font-size: 11px; color: var(--ink-soft); margin-top: 10px; }
+
+  :focus-visible { outline: 2px solid var(--court-mid); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="board">
+  <p class="eyebrow">Padel Strength · Bodyweight Block</p>
+  <h1>12-Week<br>Progress Tracker</h1>
+  <div class="score-row">
+    <div class="stat">
+      <div class="num" id="sessCount">0<span class="of">/36</span></div>
+      <div class="lbl">Sessions logged</div>
+    </div>
+    <div class="stat">
+      <div class="num" id="weekCount">0<span class="of">/12</span></div>
+      <div class="lbl">Weeks cleared</div>
+    </div>
+  </div>
+  <div class="track"><span id="bar"></span></div>
+</div>
+
+<div class="tabs" role="tablist">
+  <button class="tab active" id="tab-tracker" role="tab" aria-selected="true">Tracker</button>
+  <button class="tab" id="tab-plan" role="tab" aria-selected="false">The Plan</button>
+</div>
+
+<!-- ===== TRACKER PANEL ===== -->
+<div class="panel active" id="panel-tracker" role="tabpanel">
+  <div class="legend">
+    <b>How to level up:</b> when you hit the top of a rep range with clean form and a slow 3&ndash;4s lower for <b>two sessions running</b>, climb to the next variation. Tap each session to check it off. <b>Week 8</b> is your first-progress checkpoint; <b>Week 12</b> is where you reassess and step up loads.
+  </div>
+  <div class="weeks" id="weeks"></div>
+  <div class="footer">
+    <button class="reset" id="reset">Reset all progress</button>
+    <div class="save-note" id="saveNote">Progress saves automatically in this browser.</div>
+  </div>
+</div>
+
+<!-- ===== PLAN PANEL ===== -->
+<div class="panel" id="panel-plan" role="tabpanel">
+  <div class="plan-intro">
+    Each exercise shows a <b>ladder</b>: start at the bolded variation, and when it gets easy (top of the rep range, clean form, slow tempo, two sessions running) move one step right. Reps drop at each new step &mdash; that&rsquo;s correct. 3x/week on non-consecutive days; 5&nbsp;min easy warm-up first.
+  </div>
+  <div id="planContent"></div>
+</div>
+
+<script>
+  var KEY = 'padel_tracker_v1';
+  var TOTAL_WEEKS = 12;
+  var DAYS = [
+    { id: 'd1', day: 'Day 1', focus: 'Legs & Glutes' },
+    { id: 'd2', day: 'Day 2', focus: 'Upper & Core' },
+    { id: 'd3', day: 'Day 3', focus: 'Full Body' }
+  ];
+
+  var PLAN = [
+    {
+      day: 'Day 1', focus: 'Legs & Glutes',
+      ex: [
+        { name: 'Squat', reps: '3 x 12', steps: ['Bodyweight squat', '3-4s tempo squat', 'Bulgarian split squat', 'Pistol-squat progression'] },
+        { name: 'Lunge', reps: '3 x 10 / leg', steps: ['Reverse lunge', 'Walking lunge', 'Deficit reverse lunge'] },
+        { name: 'Push-up', reps: '3 x 8-12', steps: ['Wall / incline push-up', 'Knee push-up', 'Full push-up', 'Tempo / decline push-up'] },
+        { name: 'Glute bridge', reps: '3 x 15', steps: ['Two-leg bridge', 'Single-leg bridge', 'Feet-elevated single-leg'] },
+        { name: 'Calf raise', reps: '3 x 12 / leg', steps: ['Single-leg calf raise', 'Add a pause', 'Off a step (deeper range)'] }
+      ]
+    },
+    {
+      day: 'Day 2', focus: 'Upper & Core',
+      ex: [
+        { name: 'Band row', reps: '3 x 12', steps: ['Seated band row', 'Single-arm band row', 'Inverted row under a table', 'Feet-elevated inverted row'] },
+        { name: 'Pike push-up', reps: '3 x 8-10', steps: ['Pike push-up', 'Feet-elevated pike', 'Deeper range'] },
+        { name: 'Band pull-apart', reps: '3 x 15', steps: ['Standard', '3s tempo', 'Double the band over'] },
+        { name: 'Band external rotation', reps: '3 x 12 / arm', steps: ['Standard', 'Slower tempo', 'Double band'] },
+        { name: 'Plank', reps: '3 x 30-45s', steps: ['Front plank', 'Max-tension (RKC) plank', 'Plank shoulder taps'] },
+        { name: 'Side plank', reps: '3 x 20-30s / side', steps: ['Side plank', 'Add hip dips', 'Top-leg raised (star)'] }
+      ]
+    },
+    {
+      day: 'Day 3', focus: 'Full Body & Rotation',
+      ex: [
+        { name: 'Single-leg deadlift', reps: '3 x 8 / leg', steps: ['Hold 2 lb', 'Slow tempo', 'Add a reach at the bottom'] },
+        { name: 'Split squat', reps: '3 x 10 / leg', steps: ['Static split squat', 'Bulgarian split squat', 'Deficit'] },
+        { name: 'Dip', reps: '3 x 8-10', steps: ['Chair dip, feet close', 'Feet extended', 'Feet elevated'] },
+        { name: 'Pallof press (band)', reps: '3 x 12 / side', steps: ['Standard', 'Longer lever (arms further out)', 'Slower tempo'] },
+        { name: 'Wood chop (band)', reps: '3 x 12 / side', steps: ['Standard', 'Faster & controlled', 'Deeper rotation'] },
+        { name: 'Dead bug', reps: '3 x 10 / side', steps: ['Standard', 'Slower', 'Hold 2 lb overhead'] }
+      ]
+    }
+  ];
+
+  var state = { sessions: {}, notes: {} };
+
+  function load() {
+    try { var raw = localStorage.getItem(KEY); if (raw) state = JSON.parse(raw); }
+    catch (e) { /* start fresh */ }
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch (e) { document.getElementById('saveNote').textContent = 'Could not save - check browser privacy settings.'; }
+  }
+  function key(w, d) { return 'w' + w + d; }
+
+  function renderTracker() {
+    var wrap = document.getElementById('weeks');
+    wrap.innerHTML = '';
+    var totalSess = 0, fullWeeks = 0;
+
+    for (var w = 1; w <= TOTAL_WEEKS; w++) {
+      (function (w) {
+        var doneThisWeek = 0;
+        var card = document.createElement('div');
+        card.className = 'week';
+
+        var head = document.createElement('div');
+        head.className = 'week-head';
+        var title = document.createElement('div');
+        title.className = 'week-title';
+        title.innerHTML = '<span>Week ' + w + '</span>';
+        if (w === 8) title.innerHTML += '<span class="flag">Checkpoint</span>';
+        if (w === 12) title.innerHTML += '<span class="flag goal">Reassess</span>';
+        var tick = document.createElement('span');
+        tick.className = 'tick';
+        head.appendChild(title); head.appendChild(tick);
+        card.appendChild(head);
+
+        var sess = document.createElement('div');
+        sess.className = 'sessions';
+        DAYS.forEach(function (dd) {
+          var k = key(w, dd.id);
+          var on = !!state.sessions[k];
+          if (on) { doneThisWeek++; totalSess++; }
+          var pill = document.createElement('div');
+          pill.className = 'pill' + (on ? ' on' : '');
+          pill.setAttribute('role', 'button');
+          pill.setAttribute('tabindex', '0');
+          pill.setAttribute('aria-pressed', on ? 'true' : 'false');
+          pill.innerHTML = '<div class="day">' + dd.day + '</div><div class="focus">' + dd.focus + '</div><div class="mark">\u2713</div>';
+          function toggle() {
+            if (state.sessions[k]) delete state.sessions[k]; else state.sessions[k] = true;
+            save(); renderTracker();
+          }
+          pill.addEventListener('click', toggle);
+          pill.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+          sess.appendChild(pill);
+        });
+        card.appendChild(sess);
+
+        var note = document.createElement('textarea');
+        note.className = 'note';
+        note.placeholder = 'Notes - variations you moved up to, reps, how it felt\u2026';
+        note.value = state.notes['w' + w] || '';
+        note.addEventListener('input', function () { state.notes['w' + w] = note.value; });
+        note.addEventListener('blur', save);
+        card.appendChild(note);
+
+        tick.textContent = doneThisWeek + '/3';
+        if (doneThisWeek === 3) { tick.classList.add('full'); card.classList.add('done'); fullWeeks++; }
+        wrap.appendChild(card);
+      })(w);
+    }
+
+    document.getElementById('sessCount').innerHTML = totalSess + '<span class="of">/36</span>';
+    document.getElementById('weekCount').innerHTML = fullWeeks + '<span class="of">/12</span>';
+    document.getElementById('bar').style.width = ((totalSess / 36) * 100) + '%';
+  }
+
+  function renderPlan() {
+    var host = document.getElementById('planContent');
+    host.innerHTML = '';
+    PLAN.forEach(function (block) {
+      var b = document.createElement('div');
+      b.className = 'day-block';
+      var h = document.createElement('div');
+      h.className = 'day-heading';
+      h.innerHTML = '<span class="dnum">' + block.day + '</span><span class="dfocus">' + block.focus + '</span>';
+      b.appendChild(h);
+
+      block.ex.forEach(function (ex) {
+        var c = document.createElement('div');
+        c.className = 'ex-card';
+        var ladder = ex.steps.map(function (s, i) {
+          if (i === 0) return '<span class="start">' + s + '</span>';
+          return '<span class="arrow">\u2192</span>' + s;
+        }).join('');
+        c.innerHTML =
+          '<div class="ex-top"><span class="ex-name">' + ex.name + '</span><span class="badge">' + ex.reps + '</span></div>' +
+          '<div class="ladder">' + ladder + '</div>';
+        b.appendChild(c);
+      });
+      host.appendChild(b);
+    });
+  }
+
+  // Tabs
+  var tabTracker = document.getElementById('tab-tracker');
+  var tabPlan = document.getElementById('tab-plan');
+  var panelTracker = document.getElementById('panel-tracker');
+  var panelPlan = document.getElementById('panel-plan');
+  function selectTab(which) {
+    var trackerOn = which === 'tracker';
+    tabTracker.classList.toggle('active', trackerOn);
+    tabPlan.classList.toggle('active', !trackerOn);
+    tabTracker.setAttribute('aria-selected', trackerOn ? 'true' : 'false');
+    tabPlan.setAttribute('aria-selected', !trackerOn ? 'true' : 'false');
+    panelTracker.classList.toggle('active', trackerOn);
+    panelPlan.classList.toggle('active', !trackerOn);
+  }
+  tabTracker.addEventListener('click', function () { selectTab('tracker'); });
+  tabPlan.addEventListener('click', function () { selectTab('plan'); });
+
+  document.getElementById('reset').addEventListener('click', function () {
+    if (!confirm('Clear all checked sessions and notes?')) return;
+    state = { sessions: {}, notes: {} };
+    save(); renderTracker();
+  });
+
+  load();
+  renderTracker();
+  renderPlan();
+</script>
+</body>
+</html>
